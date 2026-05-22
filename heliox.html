@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heliox — AI Security Intelligence Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #020C14;
+  --bg2:       #071522;
+  --bg3:       #0C1E30;
+  --accent:    #00FFCC;
+  --a10:       rgba(0,255,204,.10);
+  --a15:       rgba(0,255,204,.15);
+  --a25:       rgba(0,255,204,.25);
+  --a40:       rgba(0,255,204,.40);
+  --alert:     #FF2D55;
+  --amber:     #FFB800;
+  --violet:    #A855F7;
+  --sapphire:  #3B82F6;
+  --text:      #C8E4EE;
+  --dim:       #476070;
+  --font-d:    'Orbitron', monospace;
+  --font-b:    'Rajdhani', sans-serif;
+  --font-m:    'Share Tech Mono', monospace;
+  --glow:      0 0 24px rgba(0,255,204,.35), 0 0 48px rgba(0,255,204,.12);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:16px;overflow-x:hidden}
+
+/* scanlines */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);pointer-events:none;z-index:9999}
+
+/* scrollbar */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--accent)}
+
+/* ─── NAV ─── */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;justify-content:space-between;padding:0 52px;height:68px;background:rgba(2,12,20,.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--a15)}
+.logo-wrap{display:flex;align-items:center;gap:12px;text-decoration:none}
+.logo-hex{width:36px;height:36px;border:1.5px solid var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;box-shadow:var(--glow);position:relative;overflow:hidden}
+.logo-hex::before{content:'H';font-family:var(--font-d);font-size:15px;font-weight:900;color:var(--accent)}
+.logo-hex::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:conic-gradient(transparent,rgba(0,255,204,.08),transparent);animation:spin 6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.logo-name{font-family:var(--font-d);font-size:18px;font-weight:700;letter-spacing:4px;color:#fff}
+.logo-name em{color:var(--accent);font-style:normal}
+.nav-links{display:flex;gap:36px;list-style:none}
+.nav-links a{font-family:var(--font-m);font-size:11px;color:var(--dim);text-decoration:none;letter-spacing:2px;text-transform:uppercase;transition:color .2s;position:relative}
+.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;right:0;height:1px;background:var(--accent);transform:scaleX(0);transition:transform .25s}
+.nav-links a:hover{color:var(--accent)}
+.nav-links a:hover::after{transform:scaleX(1)}
+.nav-btn{padding:9px 22px;background:transparent;border:1px solid var(--accent);border-radius:3px;font-family:var(--font-m);font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.nav-btn:hover{background:var(--a10);box-shadow:var(--glow)}
+
+/* ─── HERO ─── */
+#hero{position:relative;height:100vh;min-height:680px;display:flex;align-items:center;justify-content:center;overflow:hidden;text-align:center}
+#hex-canvas{position:absolute;inset:0;z-index:0}
+.hero-vignette{position:absolute;inset:0;background:radial-gradient(ellipse 70% 70% at 50% 50%,transparent 0%,rgba(2,12,20,.55) 100%);z-index:1;pointer-events:none}
+.hero-content{position:relative;z-index:2;max-width:900px;padding:0 24px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:5px 16px;border:1px solid var(--a25);border-radius:100px;background:rgba(0,255,204,.04);font-family:var(--font-m);font-size:9px;color:var(--accent);letter-spacing:3px;text-transform:uppercase;margin-bottom:28px}
+.badge-dot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:pdot 2s ease-in-out infinite;box-shadow:0 0 6px var(--accent)}
+@keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.5)}}
+.hero-title{font-family:var(--font-d);font-size:clamp(70px,13vw,128px);font-weight:900;letter-spacing:14px;color:#fff;line-height:1;margin-bottom:6px;position:relative;display:inline-block}
+.glitch{position:relative;display:inline-block}
+.glitch::before,.glitch::after{content:attr(data-text);position:absolute;top:0;left:0;width:100%;height:100%}
+.glitch::before{color:var(--accent);animation:g1 5s infinite;clip-path:polygon(0 0,100% 0,100% 42%,0 42%);opacity:0}
+.glitch::after{color:var(--alert);animation:g2 5s infinite;clip-path:polygon(0 58%,100% 58%,100% 100%,0 100%);opacity:0}
+@keyframes g1{0%,88%,100%{opacity:0;transform:translate(0)}89%{opacity:1;transform:translate(-3px,1px)}91%{opacity:1;transform:translate(3px,-1px)}93%{opacity:1;transform:translate(-1px,0)}95%{opacity:0}}
+@keyframes g2{0%,85%,100%{opacity:0;transform:translate(0)}86%{opacity:1;transform:translate(3px,-1px)}88%{opacity:1;transform:translate(-3px,1px)}90%{opacity:1;transform:translate(2px,0)}92%{opacity:0}}
+.hero-sub{font-family:var(--font-d);font-size:clamp(9px,1.3vw,12px);letter-spacing:8px;color:var(--accent);text-transform:uppercase;margin-bottom:32px}
+.hero-tag{font-family:var(--font-b);font-size:clamp(15px,2.2vw,20px);font-weight:300;color:var(--dim);line-height:1.65;max-width:600px;margin:0 auto 44px;min-height:72px}
+.cursor-blink{display:inline-block;width:2px;height:.85em;background:var(--accent);margin-left:2px;vertical-align:text-bottom;animation:cblink 1s step-end infinite}
+@keyframes cblink{0%,100%{opacity:1}50%{opacity:0}}
+.hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:60px}
+.btn-p{padding:13px 34px;background:var(--accent);border:none;border-radius:3px;font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--bg);cursor:pointer;transition:all .2s;box-shadow:0 0 32px rgba(0,255,204,.28)}
+.btn-p:hover{box-shadow:0 0 56px rgba(0,255,204,.55);transform:translateY(-1px)}
+.btn-s{padding:13px 34px;background:transparent;border:1px solid rgba(255,255,255,.18);border-radius:3px;font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.65);cursor:pointer;transition:all .2s}
+.btn-s:hover{border-color:var(--accent);color:var(--accent)}
+.hero-stats{display:flex;gap:52px;justify-content:center;flex-wrap:wrap}
+.hstat{text-align:center}
+.hstat-v{font-family:var(--font-d);font-size:30px;font-weight:700;color:var(--accent);display:block;line-height:1}
+.hstat-l{font-family:var(--font-m);font-size:9px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+.scroll-hint{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:6px;animation:shint 2s ease-in-out infinite}
+.scroll-hint span{font-family:var(--font-m);font-size:8px;color:var(--dim);letter-spacing:3px}
+.sh-line{width:1px;height:36px;background:linear-gradient(to bottom,var(--accent),transparent)}
+@keyframes shint{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(6px)}}
+
+/* ─── TICKER ─── */
+.ticker{background:var(--bg2);border-top:1px solid var(--a15);border-bottom:1px solid var(--a15);padding:11px 0;overflow:hidden}
+.ticker-track{display:flex;gap:64px;animation:tick 28s linear infinite;width:max-content;white-space:nowrap}
+.tick-item{display:flex;align-items:center;gap:8px;font-family:var(--font-m);font-size:10px;letter-spacing:1px;color:var(--dim)}
+.tdot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.t-r{background:var(--alert);box-shadow:0 0 5px var(--alert)}.t-c{background:var(--accent);box-shadow:0 0 5px var(--accent)}.t-a{background:var(--amber);box-shadow:0 0 5px var(--amber)}.t-v{background:var(--violet);box-shadow:0 0 5px var(--violet)}
+.tv{color:#fff;font-weight:600}
+@keyframes tick{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ─── SHARED ─── */
+.wrap{max-width:1200px;margin:0 auto;padding:0 52px}
+.sec{padding:110px 0}
+.sec-label{font-family:var(--font-m);font-size:9px;letter-spacing:4px;color:var(--accent);text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.sec-label::before{content:'//';opacity:.4}
+h2.sh{font-family:var(--font-d);font-size:clamp(26px,4vw,46px);font-weight:700;line-height:1.15;color:#fff;letter-spacing:2px;margin-bottom:18px}
+.sd{font-size:16px;font-weight:300;color:var(--dim);max-width:560px;line-height:1.75}
+
+/* ─── PROBLEM ─── */
+.prob-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:56px;align-items:start}
+.pstats{display:flex;flex-direction:column;gap:14px}
+.pcard{padding:18px 22px;background:var(--bg2);border-left:2px solid var(--alert);border-radius:0 6px 6px 0;display:flex;align-items:center;gap:18px;transition:transform .2s}
+.pcard:hover{transform:translateX(4px)}
+.pcard.amber{border-left-color:var(--amber)}
+.pcard.violet{border-left-color:var(--violet)}
+.pcard.blue{border-left-color:var(--sapphire)}
+.pv{font-family:var(--font-d);font-size:28px;font-weight:700;color:var(--alert);flex-shrink:0;min-width:76px}
+.pcard.amber .pv{color:var(--amber)}.pcard.violet .pv{color:var(--violet)}.pcard.blue .pv{color:var(--sapphire)}
+.pl{font-size:13px;color:var(--dim);font-weight:400;line-height:1.55}
+/* Terminal */
+.terminal{padding:28px;background:var(--bg2);border:1px solid var(--a15);border-radius:8px;position:relative;overflow:hidden}
+.terminal::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+.t-bar{display:flex;align-items:center;gap:8px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.04)}
+.tbd{width:10px;height:10px;border-radius:50%}.tb-r{background:#FF5F57}.tb-a{background:#FFBD2E}.tb-g{background:#28CA41}
+.t-name{margin-left:8px;font-family:var(--font-m);font-size:10px;color:var(--dim);letter-spacing:1px}
+.tl{font-family:var(--font-m);font-size:11.5px;line-height:1.9;color:var(--dim)}
+.tl .prm{color:var(--accent)}.tl .cmd{color:#fff}.tl .er{color:var(--alert)}.tl .wa{color:var(--amber)}.tl .ok{color:#00FF88}.tl .cmt{color:#2A4A5A}
+
+/* ─── PLATFORM ─── */
+.plat-top{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:56px}
+.plat-conn{display:flex;justify-content:space-around;padding:6px 0;position:relative}
+.plat-conn::before{content:'';position:absolute;top:50%;left:25%;right:25%;height:1px;background:linear-gradient(90deg,rgba(0,255,204,.08),rgba(0,255,204,.3),rgba(0,255,204,.08));transform:translateY(-50%)}
+.vcl{width:1px;height:40px;background:linear-gradient(to bottom,rgba(0,255,204,.25),rgba(0,255,204,.08));position:relative}
+.vcl::after{content:'';position:absolute;bottom:-3px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent)}
+.plat-bot{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+/* Module cards */
+.mc{padding:26px;background:var(--bg2);border:1px solid rgba(255,255,255,.055);border-radius:8px;position:relative;overflow:hidden;transition:all .3s}
+.mc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.mc.detect::before{background:var(--alert)}.mc.respond::before{background:var(--amber)}.mc.identity::before{background:var(--violet)}.mc.comply::before{background:var(--sapphire)}
+.mc:hover{border-color:rgba(255,255,255,.12);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.mc-icon{width:42px;height:42px;border-radius:7px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;font-size:18px}
+.ic-r{background:rgba(255,45,85,.12);border:1px solid rgba(255,45,85,.28)}.ic-a{background:rgba(255,184,0,.12);border:1px solid rgba(255,184,0,.28)}.ic-v{background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.28)}.ic-b{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.28)}
+.mc-tag{font-family:var(--font-m);font-size:8px;letter-spacing:3px;text-transform:uppercase;margin-bottom:6px}
+.tag-r{color:var(--alert)}.tag-a{color:var(--amber)}.tag-v{color:var(--violet)}.tag-b{color:var(--sapphire)}
+.mc-name{font-family:var(--font-d);font-size:14px;font-weight:700;color:#fff;letter-spacing:2px;margin-bottom:10px}
+.mc-desc{font-size:12.5px;font-weight:300;color:var(--dim);line-height:1.6;margin-bottom:16px}
+.mc-feats{list-style:none;display:flex;flex-direction:column;gap:5px}
+.mc-feats li{font-family:var(--font-m);font-size:10px;color:var(--dim);display:flex;align-items:center;gap:7px}
+.mc-feats li::before{content:'›';color:var(--accent);font-size:13px;line-height:1}
+/* Intel card */
+.intel-card{padding:40px 48px;background:linear-gradient(135deg,rgba(0,255,204,.06),rgba(168,85,247,.06));border:1px solid var(--accent);border-radius:10px;text-align:center;position:relative;overflow:hidden;box-shadow:0 0 48px rgba(0,255,204,.08)}
+.intel-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+.intel-card::after{content:'';position:absolute;inset:-1px;border-radius:10px;background:linear-gradient(135deg,rgba(0,255,204,.12),rgba(168,85,247,.08));z-index:-1}
+.ic-brain{width:64px;height:64px;border-radius:12px;background:rgba(0,255,204,.08);border:1px solid var(--a25);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:30px;box-shadow:var(--glow)}
+.ic-tag{font-family:var(--font-m);font-size:9px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:8px}
+.ic-name{font-family:var(--font-d);font-size:22px;font-weight:700;color:#fff;letter-spacing:3px;margin-bottom:14px}
+.ic-desc{font-size:14px;font-weight:300;color:var(--dim);max-width:560px;margin:0 auto 24px;line-height:1.7}
+.intel-pills{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.ipill{padding:5px 14px;background:rgba(0,255,204,.06);border:1px solid var(--a15);border-radius:100px;font-family:var(--font-m);font-size:9px;color:var(--accent);letter-spacing:1px}
+.live-badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-m);font-size:9px;color:#00FF88;letter-spacing:2px;margin-top:20px;padding:5px 12px;background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);border-radius:100px}
+.live-dot{width:5px;height:5px;background:#00FF88;border-radius:50%;animation:pdot 1.5s ease-in-out infinite;box-shadow:0 0 5px #00FF88}
+
+/* ─── LOOP ─── */
+.loop-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:56px;position:relative}
+.loop-steps::before{content:'';position:absolute;top:35px;left:12.5%;right:12.5%;height:1px;background:linear-gradient(90deg,transparent,var(--a25),var(--accent),var(--a25),transparent);z-index:0}
+.lstep{text-align:center;padding:0 16px;position:relative;z-index:1}
+.lstep-n{width:70px;height:70px;border:1px solid var(--a25);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;background:var(--bg);font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--accent);position:relative}
+.lstep-n::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:1px solid var(--a10)}
+.lstep-t{font-family:var(--font-d);font-size:12px;font-weight:700;color:#fff;letter-spacing:2px;margin-bottom:10px;text-transform:uppercase}
+.lstep-d{font-size:13px;font-weight:300;color:var(--dim);line-height:1.6}
+
+/* ─── MOATS ─── */
+.moats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:56px}
+.moat{padding:30px;background:var(--bg2);border:1px solid rgba(255,255,255,.055);border-radius:8px;transition:all .3s}
+.moat:hover{border-color:var(--a25);background:rgba(0,255,204,.02)}
+.moat-n{font-family:var(--font-m);font-size:8px;letter-spacing:3px;color:var(--accent);margin-bottom:14px;opacity:.55}
+.moat-t{font-family:var(--font-d);font-size:13px;font-weight:700;color:#fff;letter-spacing:1px;margin-bottom:10px}
+.moat-d{font-size:13px;font-weight:300;color:var(--dim);line-height:1.6}
+
+/* ─── CUSTOMERS ─── */
+.cust-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:56px}
+.cust-card{padding:34px 28px;background:var(--bg2);border:1px solid rgba(255,255,255,.055);border-radius:8px;transition:border-color .3s}
+.cust-card:hover{border-color:var(--a25)}
+.cseg{font-family:var(--font-m);font-size:8px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:6px}
+.cname{font-family:var(--font-d);font-size:17px;font-weight:700;color:#fff;letter-spacing:1px;margin-bottom:12px}
+.cacv{display:inline-block;padding:3px 12px;background:var(--a10);border:1px solid var(--a25);border-radius:100px;font-family:var(--font-m);font-size:9px;color:var(--accent);letter-spacing:1px;margin-bottom:18px}
+.cdesc{font-size:13px;font-weight:300;color:var(--dim);line-height:1.65;margin-bottom:18px}
+.centry{font-family:var(--font-m);font-size:9px;color:var(--dim);letter-spacing:1px}
+.centry span{color:var(--accent)}
+
+/* ─── FOUNDER ─── */
+#founder{background:var(--bg2);border-top:1px solid var(--a15);border-bottom:1px solid var(--a15);padding:110px 0}
+.founder-inner{max-width:1200px;margin:0 auto;padding:0 52px;display:grid;grid-template-columns:300px 1fr;gap:72px;align-items:start}
+.f-avatar{width:200px;height:200px;border-radius:10px;background:linear-gradient(135deg,var(--bg3),var(--bg));border:1px solid var(--a25);display:flex;align-items:center;justify-content:center;margin-bottom:22px;position:relative;overflow:hidden;box-shadow:0 0 40px rgba(0,255,204,.08)}
+.f-avatar::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,255,204,.06),transparent)}
+.f-init{font-family:var(--font-d);font-size:60px;font-weight:900;color:var(--accent);opacity:.85;position:relative;z-index:1}
+.f-avatar::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(0,255,204,.015) 4px,rgba(0,255,204,.015) 8px)}
+.f-name{font-family:var(--font-d);font-size:20px;font-weight:700;color:#fff;letter-spacing:2px;margin-bottom:5px}
+.f-role{font-family:var(--font-m);font-size:10px;color:var(--accent);letter-spacing:2px;margin-bottom:18px}
+.f-links{display:flex;gap:10px}
+.f-link{padding:7px 14px;background:transparent;border:1px solid rgba(255,255,255,.1);border-radius:3px;font-family:var(--font-m);font-size:9px;color:var(--dim);letter-spacing:1px;cursor:pointer;transition:all .2s;text-decoration:none}
+.f-link:hover{border-color:var(--accent);color:var(--accent)}
+.f-bio p{font-size:15px;font-weight:300;color:var(--dim);line-height:1.8;margin-bottom:14px}
+.f-quote{border-left:2px solid var(--accent);padding:18px 24px;background:rgba(0,255,204,.025);border-radius:0 6px 6px 0;margin:28px 0}
+.f-quote p{font-family:var(--font-b);font-size:17px;font-weight:500;color:#fff;line-height:1.6;font-style:italic}
+.f-metrics{display:flex;gap:36px;flex-wrap:wrap;margin-top:32px}
+.fm{text-align:left}
+.fm-v{font-family:var(--font-d);font-size:24px;font-weight:700;color:var(--accent);display:block;line-height:1}
+.fm-l{font-family:var(--font-m);font-size:9px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+
+/* ─── CTA ─── */
+.cta-wrap{padding:110px 52px;text-align:center;position:relative;overflow:hidden}
+.cta-wrap::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:300px;background:radial-gradient(ellipse,rgba(0,255,204,.05) 0%,transparent 70%);pointer-events:none}
+.cta-box{position:relative;max-width:680px;margin:0 auto;padding:56px;border:1px solid var(--a25);border-radius:12px;background:var(--bg2)}
+.cta-box::before{content:'';position:absolute;top:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+.cta-label{font-family:var(--font-m);font-size:9px;letter-spacing:4px;color:var(--accent);text-transform:uppercase;margin-bottom:18px}
+.cta-title{font-family:var(--font-d);font-size:clamp(22px,3.5vw,36px);font-weight:700;color:#fff;letter-spacing:2px;margin-bottom:14px;line-height:1.2}
+.cta-desc{font-size:15px;font-weight:300;color:var(--dim);margin-bottom:32px;line-height:1.65}
+
+/* ─── FOOTER ─── */
+footer{border-top:1px solid rgba(255,255,255,.05);padding:36px 52px;max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px}
+.f-brand{font-family:var(--font-d);font-size:16px;font-weight:700;letter-spacing:4px;color:rgba(255,255,255,.25)}
+.f-brand em{color:var(--accent);font-style:normal}
+.f-nav{display:flex;gap:28px;list-style:none}
+.f-nav a{font-family:var(--font-m);font-size:9px;color:var(--dim);text-decoration:none;letter-spacing:1px;transition:color .2s}
+.f-nav a:hover{color:var(--accent)}
+.f-copy{font-family:var(--font-m);font-size:9px;color:var(--dim);letter-spacing:1px;opacity:.45}
+
+/* ─── BG GRID OVERLAY ─── */
+.bg-grid::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(0,255,204,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,204,.025) 1px,transparent 1px);background-size:56px 56px;pointer-events:none;z-index:0}
+.bg-grid{position:relative}
+.bg-grid>*{position:relative;z-index:1}
+
+/* ─── REVEAL ─── */
+.rv{opacity:0;transform:translateY(20px);transition:opacity .65s ease,transform .65s ease}
+.rv.vis{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo-wrap">
+    <div class="logo-hex"></div>
+    <span class="logo-name">HELIO<em>X</em></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#platform">Platform</a></li>
+    <li><a href="#loop">How It Works</a></li>
+    <li><a href="#solutions">Solutions</a></li>
+    <li><a href="#founder">Founder</a></li>
+  </ul>
+  <button class="nav-btn">Request Demo</button>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <canvas id="hex-canvas"></canvas>
+  <div class="hero-vignette"></div>
+  <div class="hero-content">
+    <div class="hero-badge"><div class="badge-dot"></div>AI Security Intelligence &nbsp;·&nbsp; Now Live</div>
+    <h1 class="hero-title"><span class="glitch" data-text="HELIOX">HELIOX</span></h1>
+    <div class="hero-sub">AI Security Intelligence Platform</div>
+    <p class="hero-tag" id="tw"></p>
+    <div class="hero-btns">
+      <button class="btn-p">Request Demo</button>
+      <button class="btn-s">View Platform</button>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat"><span class="hstat-v" id="c1">0</span><span class="hstat-l">Threats blocked / day</span></div>
+      <div class="hstat"><span class="hstat-v">207<span style="font-size:16px;color:var(--dim)">d</span></span><span class="hstat-l">Industry breach MTTD — cut to seconds</span></div>
+      <div class="hstat"><span class="hstat-v" id="c2">0</span><span class="hstat-l">Compliance frameworks covered</span></div>
+    </div>
+  </div>
+  <div class="scroll-hint"><span>SCROLL</span><div class="sh-line"></div></div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker"><div class="ticker-track" id="tk"></div></div>
+
+<!-- PROBLEM -->
+<div class="wrap"><section class="sec">
+  <div class="sec-label rv">The intelligence gap</div>
+  <h2 class="sh rv">Security Is Broken.<br>Not For Lack Of Tools.</h2>
+  <p class="sd rv">The average enterprise runs 45–75 security products. None of them talk to each other. Heliox closes the loop — permanently.</p>
+  <div class="prob-grid">
+    <div class="pstats">
+      <div class="pcard rv">
+        <div class="pv">207d</div>
+        <div class="pl">Average time to detect a breach. Nearly seven months of undetected access inside your environment.</div>
+      </div>
+      <div class="pcard amber rv" style="transition-delay:.1s">
+        <div class="pv">70%</div>
+        <div class="pl">Of SOC alerts are false positives. Your analysts spend their careers chasing noise, not threats.</div>
+      </div>
+      <div class="pcard violet rv" style="transition-delay:.2s">
+        <div class="pv">80%</div>
+        <div class="pl">Of breaches involve compromised identity — the attack vector every SIEM consistently misses.</div>
+      </div>
+      <div class="pcard blue rv" style="transition-delay:.3s">
+        <div class="pv">$4.45M</div>
+        <div class="pl">Average breach cost — before regulatory fines, litigation, and permanent reputational damage.</div>
+      </div>
+    </div>
+    <div class="terminal rv" style="transition-delay:.2s">
+      <div class="t-bar">
+        <div class="tbd tb-r"></div><div class="tbd tb-a"></div><div class="tbd tb-g"></div>
+        <span class="t-name">soc-analyst@enterprise — heliox-assessment</span>
+      </div>
+      <div class="tl"><span class="prm">$ </span><span class="cmd">heliox scan --full --env production --correlate</span></div>
+      <div class="tl"><span class="cmt"># Connecting to 3 environments across 47 tools...</span></div>
+      <div class="tl">&nbsp;</div>
+      <div class="tl"><span class="wa">[WARN]  </span>Identity: svc-account-db02 accessed prod-s3 at 02:14 UTC</div>
+      <div class="tl"><span class="er">[CRIT]  </span>Impossible travel: admin@corp.com → SG then DE in 8 min</div>
+      <div class="tl"><span class="wa">[WARN]  </span>Compliance drift: SOC2 CC6.1 access review overdue 14d</div>
+      <div class="tl"><span class="er">[CRIT]  </span>Lateral move: svc-account-db02 → prod-k8s via stolen token</div>
+      <div class="tl">&nbsp;</div>
+      <div class="tl"><span class="prm">→ </span><span class="ok">HELIOX INTEL: 4 signals correlated → 1 active breach chain</span></div>
+      <div class="tl"><span class="prm">→ </span><span class="ok">Containment: token revoked, analyst notified · elapsed: 4s</span></div>
+      <div class="tl">&nbsp;</div>
+      <div class="tl"><span class="cmt"># Your SIEM filed 3 separate low-priority tickets.</span></div>
+      <div class="tl"><span class="cmt"># They would have been reviewed on Tuesday.</span></div>
+    </div>
+  </div>
+</section></div>
+
+<!-- PLATFORM -->
+<div style="background:var(--bg2);border-top:1px solid var(--a15);border-bottom:1px solid var(--a15)">
+<div class="wrap"><section class="sec" id="platform">
+  <div class="sec-label rv">The platform</div>
+  <h2 class="sh rv">Five Modules.<br>One Continuous Loop.</h2>
+  <p class="sd rv">Heliox connects threat detection, SOC automation, identity risk, and compliance posture into a single intelligence engine. Built to think — not just to alert.</p>
+
+  <!-- Top two modules -->
+  <div class="plat-top">
+    <div class="mc detect rv">
+      <div class="mc-icon ic-r">⚡</div>
+      <div class="mc-tag tag-r">Module 01</div>
+      <div class="mc-name">HELIOX DETECT</div>
+      <div class="mc-desc">Behavioral ML threat detection across cloud, endpoint, identity, and SaaS — with graph-based signal correlation that finds the attack chains your SIEM never could.</div>
+      <ul class="mc-feats">
+        <li>Cross-surface behavioral baselines per environment</li>
+        <li>Graph-based multi-signal attack chain correlation</li>
+        <li>LLM-powered plain-English alert explanation</li>
+        <li>Natural language threat hunting interface</li>
+        <li>Integrates with existing SIEM — no replacement needed</li>
+      </ul>
+    </div>
+    <div class="mc respond rv" style="transition-delay:.12s">
+      <div class="mc-icon ic-a">🛡</div>
+      <div class="mc-tag tag-a">Module 02</div>
+      <div class="mc-name">HELIOX RESPOND</div>
+      <div class="mc-desc">AI-native SOC automation with autonomous containment, 200+ pre-built playbooks, and shift handover intelligence that keeps your team sharp at 2am.</div>
+      <ul class="mc-feats">
+        <li>200+ pre-built response playbooks for known scenarios</li>
+        <li>AI-generated playbook drafts for novel patterns</li>
+        <li>Autonomous containment with one-click override</li>
+        <li>Smart analyst routing by incident type and history</li>
+        <li>AI shift handover summaries for seamless transitions</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Connectors pointing to Intel -->
+  <div class="plat-conn">
+    <div class="vcl"></div>
+    <div class="vcl"></div>
+  </div>
+
+  <!-- INTEL card -->
+  <div class="intel-card rv" style="transition-delay:.22s;margin-bottom:0">
+    <div class="ic-brain">🧠</div>
+    <div class="ic-tag">Core Intelligence Engine</div>
+    <div class="ic-name">HELIOX INTEL</div>
+    <div class="ic-desc">The AI reasoning layer that makes all four modules more than the sum of their parts. Cross-module signal correlation, threat narratives, predictive risk modeling, and board-ready reporting — powered by a continuous learning loop.</div>
+    <div class="intel-pills">
+      <span class="ipill">Cross-module correlation</span>
+      <span class="ipill">Threat narrative engine</span>
+      <span class="ipill">Predictive risk model</span>
+      <span class="ipill">Board-ready reports</span>
+      <span class="ipill">Continuous learning</span>
+    </div>
+    <div><div class="live-badge"><div class="live-dot"></div>24/7 live intelligence</div></div>
+  </div>
+
+  <!-- Connectors pointing down -->
+  <div class="plat-conn" style="margin-top:0">
+    <div class="vcl" style="background:linear-gradient(to bottom,rgba(0,255,204,.08),rgba(0,255,204,.25));"></div>
+    <div class="vcl" style="background:linear-gradient(to bottom,rgba(0,255,204,.08),rgba(0,255,204,.25));"></div>
+  </div>
+
+  <!-- Bottom two modules -->
+  <div class="plat-bot">
+    <div class="mc identity rv" style="transition-delay:.1s">
+      <div class="mc-icon ic-v">👤</div>
+      <div class="mc-tag tag-v">Module 03</div>
+      <div class="mc-name">HELIOX IDENTITY</div>
+      <div class="mc-desc">Unified identity graph across every IdP — Okta, Azure AD, Google Workspace, AWS IAM — with real-time risk scoring for every human, service account, and machine identity.</div>
+      <ul class="mc-feats">
+        <li>Real-time identity risk score (0–100) per entity</li>
+        <li>Impossible travel & off-hours anomaly detection</li>
+        <li>Least-privilege access recommendations</li>
+        <li>Shadow IT and unapproved SaaS discovery</li>
+        <li>PAM-light for mid-market without PAM complexity</li>
+      </ul>
+    </div>
+    <div class="mc comply rv" style="transition-delay:.2s">
+      <div class="mc-icon ic-b">📋</div>
+      <div class="mc-tag tag-b">Module 04</div>
+      <div class="mc-name">HELIOX COMPLY</div>
+      <div class="mc-desc">Continuous compliance posture across SOC 2, ISO 27001, NIST CSF, HIPAA, GDPR, and PCI DSS — real-time, not a point-in-time audit scramble.</div>
+      <ul class="mc-feats">
+        <li>Real-time posture score across 12+ frameworks</li>
+        <li>Automated evidence collection mapped to controls</li>
+        <li>Policy drift alerts when changes break controls</li>
+        <li>Auditor-ready evidence packages on demand</li>
+        <li>Auditor portal with read-only external access</li>
+      </ul>
+    </div>
+  </div>
+</section></div></div>
+
+<!-- HOW IT WORKS -->
+<div class="wrap"><section class="sec" id="loop">
+  <div class="sec-label rv">The intelligence loop</div>
+  <h2 class="sh rv">How Heliox Thinks.</h2>
+  <p class="sd rv">Security posture is a continuous loop — not four separate products. Heliox is the first platform designed around that truth.</p>
+  <div class="loop-steps">
+    <div class="lstep rv">
+      <div class="lstep-n">01</div>
+      <div class="lstep-t">Ingest</div>
+      <div class="lstep-d">Connects to every surface: cloud APIs, endpoints, identity providers, SaaS apps, network logs. No migration. No rip-and-replace.</div>
+    </div>
+    <div class="lstep rv" style="transition-delay:.1s">
+      <div class="lstep-n">02</div>
+      <div class="lstep-t">Correlate</div>
+      <div class="lstep-d">HELIOX INTEL links signals across all four modules. Three low-priority alerts become one high-confidence breach chain.</div>
+    </div>
+    <div class="lstep rv" style="transition-delay:.2s">
+      <div class="lstep-n">03</div>
+      <div class="lstep-t">Act</div>
+      <div class="lstep-d">Autonomous containment executes in seconds. Playbooks run. Analysts receive full narrative — not raw logs and raw adrenaline.</div>
+    </div>
+    <div class="lstep rv" style="transition-delay:.3s">
+      <div class="lstep-n">04</div>
+      <div class="lstep-t">Learn</div>
+      <div class="lstep-d">Every alert, decision, and incident sharpens the models. Heliox becomes harder to beat — and harder to replace — with every deployment.</div>
+    </div>
+  </div>
+</section></div>
+
+<!-- MOATS -->
+<div style="background:var(--bg2);border-top:1px solid var(--a15);border-bottom:1px solid var(--a15)" class="bg-grid">
+<div class="wrap"><section class="sec">
+  <div class="sec-label rv">Defensible moats</div>
+  <h2 class="sh rv">Built to be<br>impossible to replace.</h2>
+  <div class="moats-grid">
+    <div class="moat rv"><div class="moat-n">MOAT 01</div><div class="moat-t">Data flywheel</div><div class="moat-d">Every customer environment trains more accurate detection models. After 24 months, Heliox's ML is a dataset no competitor can replicate.</div></div>
+    <div class="moat rv" style="transition-delay:.08s"><div class="moat-n">MOAT 02</div><div class="moat-t">Integration depth</div><div class="moat-d">Six months of playbook tuning, analyst training, and workflow configuration creates switching costs that dwarf any contract value.</div></div>
+    <div class="moat rv" style="transition-delay:.16s"><div class="moat-n">MOAT 03</div><div class="moat-t">Compliance history</div><div class="moat-d">Three years of auditor-accepted evidence packages live inside Heliox. Switching platforms means starting the audit trail from zero.</div></div>
+    <div class="moat rv" style="transition-delay:.0s"><div class="moat-n">MOAT 04</div><div class="moat-t">Analyst memory</div><div class="moat-d">Heliox learns every team's escalation preferences, approved actions, and incident patterns. This institutional knowledge doesn't transfer.</div></div>
+    <div class="moat rv" style="transition-delay:.08s"><div class="moat-n">MOAT 05</div><div class="moat-t">Network effects</div><div class="moat-d">Novel attack patterns detected in one environment instantly enrich detections for all others. A true network effect that strengthens with scale.</div></div>
+    <div class="moat rv" style="transition-delay:.16s"><div class="moat-n">MOAT 06</div><div class="moat-t">Additive positioning</div><div class="moat-d">Heliox enhances existing tools rather than displacing them. This eliminates organizational resistance and compresses sales cycles dramatically.</div></div>
+  </div>
+</section></div></div>
+
+<!-- CUSTOMERS -->
+<div class="wrap"><section class="sec" id="solutions">
+  <div class="sec-label rv">Who we serve</div>
+  <h2 class="sh rv">Built for the companies<br>that can't afford to be wrong.</h2>
+  <div class="cust-grid">
+    <div class="cust-card rv">
+      <div class="cseg">Segment 01</div>
+      <div class="cname">Growth Stage Tech</div>
+      <div class="cacv">$50K – $150K ACV</div>
+      <div class="cdesc">Series B–D companies that just hired their first CISO. SOC 2 Type II is a sales blocker. Heliox deploys in 4 weeks — not 18 months.</div>
+      <div class="centry">Entry motion: <span>HELIOX COMPLY</span></div>
+    </div>
+    <div class="cust-card rv" style="transition-delay:.1s">
+      <div class="cseg">Segment 02</div>
+      <div class="cname">Mid-Market Enterprise</div>
+      <div class="cacv">$150K – $400K ACV</div>
+      <div class="cdesc">500–2,000 person companies drowning in alert noise from 15–30 fragmented tools. Heliox is the reasoning layer they've been missing.</div>
+      <div class="centry">Entry motion: <span>DETECT + RESPOND</span></div>
+    </div>
+    <div class="cust-card rv" style="transition-delay:.2s">
+      <div class="cseg">Segment 03</div>
+      <div class="cname">Regulated Enterprise</div>
+      <div class="cacv">$400K – $1.5M+ ACV</div>
+      <div class="cdesc">Financial services, healthcare, critical infrastructure. Multiple compliance frameworks, large SOC teams, and regulators that don't accept excuses.</div>
+      <div class="centry">Entry motion: <span>Full Platform</span></div>
+    </div>
+  </div>
+</section></div>
+
+<!-- FOUNDER -->
+<section id="founder">
+  <div class="founder-inner">
+    <div class="rv">
+      <div class="f-avatar"><span class="f-init">SR</span></div>
+      <div class="f-name">Sanhik Roy</div>
+      <div class="f-role">Founder &amp; CEO · HELIOX</div>
+      <div class="f-links">
+        <a href="#" class="f-link">LinkedIn</a>
+        <a href="#" class="f-link">Twitter / X</a>
+        <a href="#" class="f-link">Email</a>
+      </div>
+    </div>
+    <div class="rv" style="transition-delay:.15s">
+      <div class="sec-label" style="margin-bottom:20px">// Founder</div>
+      <div class="f-bio">
+        <p>Sanhik Roy founded Heliox after spending years watching enterprise security teams fight the same losing battle — not against attackers, but against fragmentation. The tools existed. The talent existed. The data existed. What didn't exist was a single intelligence layer that could make sense of all three simultaneously.</p>
+        <p>With a background spanning threat detection research, enterprise security architecture, and AI systems, Sanhik brings both the technical depth to build Heliox and the operational experience to understand exactly what security teams need at 2am when something is actively wrong in production.</p>
+        <p>Heliox is built on a simple conviction: the future of enterprise security is not more tools. It is one system that makes every tool you already have dramatically more effective — by connecting their outputs and reasoning across them continuously.</p>
+      </div>
+      <div class="f-quote">
+        <p>"Every CISO I've spoken to has the same story. Their team is drowning in alerts, their identity system isn't connected to their threat detection, and they're spending six weeks a year preparing for a compliance audit that tells them nothing about their actual security posture. Heliox fixes all three — not by replacing what works, but by finally connecting it."</p>
+      </div>
+      <div class="f-metrics">
+        <div class="fm"><span class="fm-v">12y</span><span class="fm-l">Security domain</span></div>
+        <div class="fm"><span class="fm-v">3</span><span class="fm-l">Prior exits</span></div>
+        <div class="fm"><span class="fm-v">40+</span><span class="fm-l">CISOs interviewed</span></div>
+        <div class="fm"><span class="fm-v">$0</span><span class="fm-l">Spent on hype</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-wrap bg-grid">
+  <div class="cta-box rv">
+    <div class="cta-label">// Get started</div>
+    <h2 class="cta-title">Start With A Free<br>Security Assessment.</h2>
+    <p class="cta-desc">Heliox connects to your environment and delivers a full compliance posture and threat surface report in two weeks. No migration. No rip-and-replace. No commitment.</p>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+      <button class="btn-p">Request Assessment</button>
+      <button class="btn-s">Talk to a Founder</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div style="border-top:1px solid rgba(255,255,255,.04)">
+<footer>
+  <div class="f-brand">HELIO<em>X</em></div>
+  <ul class="f-nav">
+    <li><a href="#">Platform</a></li>
+    <li><a href="#">Solutions</a></li>
+    <li><a href="#">Pricing</a></li>
+    <li><a href="#">Blog</a></li>
+    <li><a href="#">Careers</a></li>
+    <li><a href="#">Contact</a></li>
+  </ul>
+  <div class="f-copy">© 2025 Heliox Security Inc. · All rights reserved</div>
+</footer>
+</div>
+
+<script>
+/* ── HEX CANVAS ── */
+const cvs = document.getElementById('hex-canvas');
+const ctx = cvs.getContext('2d');
+const R = 54;
+let nodes=[], pkts=[];
+
+function resize(){
+  cvs.width=innerWidth; cvs.height=innerHeight;
+  nodes=[];
+  const cols=Math.ceil(cvs.width/(R*1.5))+2;
+  const rows=Math.ceil(cvs.height/(R*Math.sqrt(3)))+2;
+  for(let c=-1;c<cols;c++){
+    for(let r=-1;r<rows;r++){
+      const x=c*R*1.5;
+      const y=r*R*Math.sqrt(3)+(c%2===0?0:R*Math.sqrt(3)/2);
+      nodes.push({x,y,ph:Math.random()*Math.PI*2,sp:2e-4+Math.random()*3e-4,hot:Math.random()<.07,bright:Math.random()<.14,sz:Math.random()<.18?2:1});
+    }
+  }
+}
+
+function nbrs(n){
+  return nodes.filter(m=>{const d=Math.hypot(m.x-n.x,m.y-n.y);return d>1&&d<R*1.7});
+}
+
+function spawn(){
+  if(pkts.length<22&&Math.random()<.045){
+    const s=nodes[Math.floor(Math.random()*nodes.length)];
+    const ns=nbrs(s);
+    if(ns.length){
+      const e=ns[Math.floor(Math.random()*ns.length)];
+      const al=Math.random()<.13;
+      pkts.push({sx:s.x,sy:s.y,ex:e.x,ey:e.y,t:0,sp:.011+Math.random()*.014,al});
+    }
+  }
+}
+
+function frame(t){
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  const seen=new Set();
+  nodes.forEach(n=>{
+    nbrs(n).forEach(m=>{
+      const k=[Math.round(Math.min(n.x,m.x)),Math.round(Math.min(n.y,m.y)),Math.round(Math.max(n.x,m.x)),Math.round(Math.max(n.y,m.y))].join(',');
+      if(seen.has(k))return; seen.add(k);
+      ctx.beginPath(); ctx.moveTo(n.x,n.y); ctx.lineTo(m.x,m.y);
+      ctx.strokeStyle='rgba(0,255,204,.04)'; ctx.lineWidth=.5; ctx.stroke();
+    });
+    const pulse=.4+.6*Math.abs(Math.sin(t*n.sp+n.ph));
+    const a=n.hot?.55+.45*pulse:n.bright?.25+.35*pulse:.07+.05*pulse;
+    const col=n.hot?`rgba(255,45,85,${a})`:`rgba(0,255,204,${a})`;
+    ctx.beginPath(); ctx.arc(n.x,n.y,n.hot?2.5:n.sz,0,Math.PI*2);
+    ctx.fillStyle=col; ctx.fill();
+  });
+  spawn();
+  pkts=pkts.filter(p=>p.t<1);
+  pkts.forEach(p=>{
+    p.t+=p.sp;
+    const x=p.sx+(p.ex-p.sx)*p.t, y=p.sy+(p.ey-p.sy)*p.t;
+    const tx=p.sx+(p.ex-p.sx)*Math.max(0,p.t-.28), ty=p.sy+(p.ey-p.sy)*Math.max(0,p.t-.28);
+    ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(x,y);
+    ctx.strokeStyle=p.al?'rgba(255,45,85,.5)':'rgba(0,255,204,.4)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x,y,p.al?3:2,0,Math.PI*2);
+    ctx.fillStyle=p.al?'#FF2D55':'#00FFCC';
+    ctx.shadowColor=p.al?'#FF2D55':'#00FFCC'; ctx.shadowBlur=8;
+    ctx.fill(); ctx.shadowBlur=0;
+  });
+  requestAnimationFrame(frame);
+}
+window.addEventListener('resize',resize);
+resize(); requestAnimationFrame(frame);
+
+/* ── TYPEWRITER ── */
+const phrases=[
+  'The AI reasoning layer that makes every threat visible, every identity governed, and every compliance audit effortless.',
+  'One intelligence loop. Threat detection, SOC automation, identity risk, and compliance posture — finally unified.',
+  'Built for the security teams that refuse to be the reason a breach went undetected for 207 days.'
+];
+let pi=0,ci=0,del=false;
+const tw=document.getElementById('tw');
+function type(){
+  const ph=phrases[pi];
+  if(!del){
+    tw.innerHTML=ph.slice(0,ci+1)+'<span class="cursor-blink"></span>';
+    ci++;
+    if(ci===ph.length){del=true;setTimeout(type,2600);return;}
+  } else {
+    tw.innerHTML=ph.slice(0,ci-1)+'<span class="cursor-blink"></span>';
+    ci--;
+    if(ci===0){del=false;pi=(pi+1)%phrases.length;}
+  }
+  setTimeout(type,del?20:36);
+}
+type();
+
+/* ── TICKER ── */
+const items=[
+  {dot:'t-r',txt:'THREAT BLOCKED',val:'14,732',sfx:' malicious signals stopped today'},
+  {dot:'t-c',txt:'IDENTITY ANOMALIES',val:'847',sfx:' risk events flagged & correlated'},
+  {dot:'t-a',txt:'SOC AUTOMATION',val:'94%',sfx:' of alerts triaged automatically'},
+  {dot:'t-v',txt:'COMPLIANCE POSTURE',val:'99.1%',sfx:' of controls actively passing'},
+  {dot:'t-r',txt:'BREACH CHAINS',val:'3',sfx:' active intrusions contained today'},
+  {dot:'t-c',txt:'MEAN DETECTION TIME',val:'<4s',sfx:' — industry average: 207 days'},
+  {dot:'t-a',txt:'FALSE POSITIVE RATE',val:'2.3%',sfx:' — industry average: 70%'},
+  {dot:'t-v',txt:'FRAMEWORKS MONITORED',val:'12',sfx:' compliance frameworks live'},
+];
+const tk=document.getElementById('tk');
+const mkItems=()=>items.map(i=>`<div class="tick-item"><div class="tdot ${i.dot}"></div><span>${i.txt}</span><span class="tv">${i.val}</span><span>${i.sfx}</span></div>`).join('');
+tk.innerHTML=mkItems()+mkItems();
+
+/* ── COUNTERS ── */
+function count(el,target,dur=1800){
+  const s=performance.now();
+  const u=now=>{
+    const p=Math.min((now-s)/dur,1);
+    const e=1-(1-p)**3;
+    el.textContent=Math.round(target*e).toLocaleString()+(p===1&&target>=1000?'+':'');
+    if(p<1)requestAnimationFrame(u);
+  };
+  requestAnimationFrame(u);
+}
+setTimeout(()=>{
+  const c1=document.getElementById('c1');
+  const c2=document.getElementById('c2');
+  if(c1)count(c1,14732);
+  if(c2)count(c2,12);
+},700);
+
+/* ── SCROLL REVEAL ── */
+const obs=new IntersectionObserver(es=>{
+  es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis')});
+},{threshold:.08,rootMargin:'0px 0px -32px 0px'});
+document.querySelectorAll('.rv').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
